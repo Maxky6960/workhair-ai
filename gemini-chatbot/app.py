@@ -11,6 +11,14 @@ load_dotenv()
 client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
 MODEL = "gemini-2.5-flash"
 
+# ⚙️ ตั้งค่าหน้า
+st.set_page_config(
+    page_title="Luna - Workhair AI Assistant",
+    page_icon="💇",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
+
 
 @st.cache_resource
 def load_rag():
@@ -20,7 +28,7 @@ def load_rag():
 rag = load_rag()
 
 st.title("🥛 Luna ผู้ช่วย AI ของ Workhair")
-st.caption("ถามเรื่องเมนู เวลาเปิด หรือข้อมูลร้านได้เลย")
+st.caption("ถามเรื่องทรงผมและ เวลาเปิดร้าน หรือข้อมูลร้านได้เลย")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []

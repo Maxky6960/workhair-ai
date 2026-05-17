@@ -15,9 +15,38 @@ class RAGEngine:
     def _load_and_chunk(self, path: str) -> list[str]:
         """Load (ขั้นตอน 1) และ Chunk (ขั้นตอน 2)"""
         with open(path, encoding="utf-8") as f:
-            text = f.read()
-        # ตัดตามบรรทัดเปล่า
-        return [c.strip() for c in text.split("\n\n") if c.strip()]
+            text = f.read().replace("\r\n", "\n")
+
+        # ทำความสะอาดบรรทัดว่าง และรวมเป็นรายการบรรทัด
+        lines = [l.strip() for l in text.splitlines() if l.strip()]
+
+        # สร้าง chunk ขนาดจำกัด (characters) พร้อม overlap เพื่อให้การค้นหาละเอียดขึ้น
+        max_chars = 450
+        overlap_chars = 120
+        chunks: list[str] = []
+        cur = ""
+
+        for line in lines:
+            if cur:
+                candidate = cur + " " + line
+            else:
+                candidate = line
+
+            if len(candidate) > max_chars:
+                chunks.append(cur.strip())
+                # เริ่ม chunk ใหม่ด้วยส่วน overlap จาก chunk ก่อนหน้า
+                if overlap_chars > 0:
+                    start = max(0, len(cur) - overlap_chars)
+                    cur = cur[start:].strip() + " " + line
+                else:
+                    cur = line
+            else:
+                cur = candidate
+
+        if cur:
+            chunks.append(cur.strip())
+
+        return [c for c in chunks if c]
 
     def _build_index(self):
         """Embed (ขั้นตอน 3)"""
