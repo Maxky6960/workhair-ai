@@ -27,22 +27,24 @@ st.markdown(
     @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
 
     :root {
-        --ink: #1a1a1a;
-        --ink-soft: #51423b;
-        --accent: #e7a56d;
-        --accent-dark: #c2764d;
-        --peach: #f7e2d4;
-        --rose: #f2d2c6;
-        --ivory: #fffaf4;
-        --card: rgba(255, 255, 255, 0.88);
-        --border: rgba(116, 80, 60, 0.14);
-        --shadow: rgba(77, 52, 34, 0.12);
+        --ink: #111827;
+        --ink-soft: #4b5563;
+        --primary: #2563eb;
+        --primary-dark: #1d4ed8;
+        --primary-soft: rgba(37, 99, 235, 0.14);
+        --bg: #eef3ff;
+        --bg-soft: #f7f9ff;
+        --card: rgba(255, 255, 255, 0.92);
+        --border: rgba(148, 163, 184, 0.32);
+        --shadow: rgba(30, 64, 175, 0.14);
+        --assistant: #ffffff;
+        --assistant-border: #e2e8f0;
     }
 
     html, body, [class*="stApp"] {
         font-family: 'Manrope', sans-serif;
         color: var(--ink);
-        background: radial-gradient(circle at 10% 10%, #fff5ea 0%, #f6e0d3 35%, #f0d2c6 60%, #f2e9df 100%);
+        background: radial-gradient(circle at 15% 10%, #ffffff 0%, var(--bg-soft) 40%, var(--bg) 100%);
     }
 
     h1, h2, h3, h4 {
@@ -59,7 +61,7 @@ st.markdown(
     .hero {
         padding: 1.8rem 2.2rem;
         border-radius: 24px;
-        background: linear-gradient(130deg, rgba(255, 255, 255, 0.95), rgba(252, 243, 236, 0.86));
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(241, 246, 255, 0.92));
         border: 1px solid var(--border);
         box-shadow: 0 22px 60px var(--shadow);
         margin-bottom: 1.6rem;
@@ -82,8 +84,8 @@ st.markdown(
         gap: 0.4rem;
         padding: 0.35rem 0.75rem;
         border-radius: 999px;
-        background: rgba(231, 165, 109, 0.2);
-        color: var(--accent-dark);
+        background: var(--primary-soft);
+        color: var(--primary-dark);
         font-weight: 600;
         font-size: 0.85rem;
         margin-right: 0.5rem;
@@ -94,33 +96,64 @@ st.markdown(
         border: 1px solid var(--border);
         border-radius: 20px;
         padding: 1.2rem 1.4rem 0.6rem;
-        box-shadow: 0 16px 50px rgba(77, 52, 34, 0.1);
+        box-shadow: 0 16px 50px var(--shadow);
     }
 
-    .stChatMessage {
-        padding: 0.25rem 0.2rem;
+    [data-testid="stChatMessage"] {
+        padding: 0.4rem 0.25rem;
+        gap: 0.6rem;
+        align-items: flex-start;
     }
 
-    .stChatMessage [data-testid="stMarkdownContainer"] p {
+    [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] {
+        display: inline-block;
+        max-width: 78%;
+        padding: 0.65rem 0.95rem;
+        border-radius: 18px;
         line-height: 1.6;
         font-size: 1rem;
+        box-shadow: 0 8px 24px rgba(30, 64, 175, 0.08);
+    }
+
+    [data-testid="stChatMessage"] [data-testid="stMarkdownContainer"] p {
+        margin: 0;
+    }
+
+    [data-testid="stChatMessage"][data-author="assistant"] [data-testid="stMarkdownContainer"],
+    [data-testid="stChatMessage"][data-message-author="assistant"] [data-testid="stMarkdownContainer"] {
+        background: var(--assistant);
+        border: 1px solid var(--assistant-border);
+        color: var(--ink);
+    }
+
+    [data-testid="stChatMessage"][data-author="user"],
+    [data-testid="stChatMessage"][data-message-author="user"] {
+        flex-direction: row-reverse;
+    }
+
+    [data-testid="stChatMessage"][data-author="user"] [data-testid="stMarkdownContainer"],
+    [data-testid="stChatMessage"][data-message-author="user"] [data-testid="stMarkdownContainer"] {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: #ffffff;
+        border: none;
+        box-shadow: 0 12px 28px rgba(37, 99, 235, 0.28);
     }
 
     [data-testid="stChatInput"] textarea {
         border-radius: 18px;
-        border: 1px solid rgba(142, 96, 71, 0.25);
+        border: 1px solid rgba(37, 99, 235, 0.28);
         padding: 0.85rem 1rem;
         font-size: 1rem;
-        background: rgba(255, 255, 255, 0.9);
+        background: rgba(255, 255, 255, 0.98);
     }
 
     [data-testid="stChatInput"] textarea:focus {
-        border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(231, 165, 109, 0.18);
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18);
     }
 
     [data-testid="stSidebar"] {
-        background: rgba(255, 255, 255, 0.6);
+        background: rgba(255, 255, 255, 0.75);
         border-right: 1px solid var(--border);
     }
 
