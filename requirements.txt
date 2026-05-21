@@ -1,6 +1,8 @@
-streamlit
-sentence-transformers
+altair
 faiss-cpu
 google-genai
+pandas
 python-dotenv
 requests
+sentence-transformers
+streamlit
