@@ -27,19 +27,22 @@ st.markdown(
     @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
 
     :root {
-        --ink: #1c1a18;
-        --ink-soft: #4a423c;
-        --accent: #d48f6b;
-        --accent-dark: #a96445;
-        --cream: #f8f3ee;
-        --card: rgba(255, 255, 255, 0.78);
-        --border: rgba(89, 73, 63, 0.12);
+        --ink: #1a1a1a;
+        --ink-soft: #51423b;
+        --accent: #e7a56d;
+        --accent-dark: #c2764d;
+        --peach: #f7e2d4;
+        --rose: #f2d2c6;
+        --ivory: #fffaf4;
+        --card: rgba(255, 255, 255, 0.88);
+        --border: rgba(116, 80, 60, 0.14);
+        --shadow: rgba(77, 52, 34, 0.12);
     }
 
     html, body, [class*="stApp"] {
         font-family: 'Manrope', sans-serif;
         color: var(--ink);
-        background: radial-gradient(circle at top left, #fff9f2 0%, #f3e9de 45%, #efe3d7 100%);
+        background: radial-gradient(circle at 10% 10%, #fff5ea 0%, #f6e0d3 35%, #f0d2c6 60%, #f2e9df 100%);
     }
 
     h1, h2, h3, h4 {
@@ -56,9 +59,9 @@ st.markdown(
     .hero {
         padding: 1.8rem 2.2rem;
         border-radius: 24px;
-        background: linear-gradient(120deg, rgba(255, 255, 255, 0.92), rgba(249, 242, 234, 0.82));
+        background: linear-gradient(130deg, rgba(255, 255, 255, 0.95), rgba(252, 243, 236, 0.86));
         border: 1px solid var(--border);
-        box-shadow: 0 22px 60px rgba(72, 50, 33, 0.12);
+        box-shadow: 0 22px 60px var(--shadow);
         margin-bottom: 1.6rem;
     }
 
@@ -79,7 +82,7 @@ st.markdown(
         gap: 0.4rem;
         padding: 0.35rem 0.75rem;
         border-radius: 999px;
-        background: rgba(212, 143, 107, 0.14);
+        background: rgba(231, 165, 109, 0.2);
         color: var(--accent-dark);
         font-weight: 600;
         font-size: 0.85rem;
@@ -91,7 +94,7 @@ st.markdown(
         border: 1px solid var(--border);
         border-radius: 20px;
         padding: 1.2rem 1.4rem 0.6rem;
-        box-shadow: 0 16px 50px rgba(77, 52, 34, 0.08);
+        box-shadow: 0 16px 50px rgba(77, 52, 34, 0.1);
     }
 
     .stChatMessage {
@@ -105,9 +108,15 @@ st.markdown(
 
     [data-testid="stChatInput"] textarea {
         border-radius: 18px;
-        border: 1px solid rgba(100, 78, 61, 0.22);
+        border: 1px solid rgba(142, 96, 71, 0.25);
         padding: 0.85rem 1rem;
         font-size: 1rem;
+        background: rgba(255, 255, 255, 0.9);
+    }
+
+    [data-testid="stChatInput"] textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(231, 165, 109, 0.18);
     }
 
     [data-testid="stSidebar"] {
@@ -131,6 +140,10 @@ st.markdown(
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+    [data-testid="stToolbar"] {visibility: hidden; height: 0px;}
+    [data-testid="stDecoration"] {display: none;}
+    [data-testid="stStatusWidget"] {display: none;}
+    .stDeployButton {display: none;}
     </style>
     """,
     unsafe_allow_html=True,
