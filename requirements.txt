@@ -1,6 +1,5 @@
 altair
 faiss-cpu
-google-genai
 pandas
 python-dotenv
 requests
