@@ -163,7 +163,15 @@ st.markdown(
 }
 
 body {
-    background: var(--bg-gradient);
+    background: linear-gradient(-45deg, #fef0e4, #f6f4ef, #edf2f7, #fef0e4);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+}
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
 }
 
 /* Hide Streamlit elements */
@@ -362,6 +370,36 @@ section[data-testid="stChatInput"] > div {
     .chat-container { height: calc(100vh - 260px); }
     .message { max-width: 90%; }
 }
+
+.barber-pole {
+    width: 15px;
+    height: 50px;
+    background: repeating-linear-gradient(
+        -45deg,
+        #f2a88b,
+        #f2a88b 8px,
+        #ffffff 8px,
+        #ffffff 16px,
+        #2f4254 16px,
+        #2f4254 24px,
+        #ffffff 24px,
+        #ffffff 32px
+    );
+    background-size: 100% 200%;
+    animation: barber-roll 1.5s linear infinite;
+    border: 2px solid #3b2c20;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+@keyframes barber-roll {
+    from { background-position: 0 0; }
+    to { background-position: 0 64px; }
+}
+
+@media (max-width: 720px) {
+    .barber-pole { height: 40px; width: 12px; }
+}
 </style>
 """,
     unsafe_allow_html=True,
@@ -369,9 +407,13 @@ section[data-testid="stChatInput"] > div {
 
 st.markdown(
     """
-    <div style="text-align: center; margin-bottom: 10px; font-family: 'Mitr', sans-serif;">
-        <h1 style="font-size: 2.2rem; font-weight: 600; color: #3b2c20; margin-bottom: 0;">Luna - Workhair</h1>
-        <p style="font-size: 1.1rem; color: #8c7b6c;">ผู้ช่วย AI ของร้าน Workhair ✨</p>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 10px; font-family: 'Mitr', sans-serif;">
+        <div class="barber-pole"></div>
+        <div style="text-align: center;">
+            <h1 style="font-size: 2.2rem; font-weight: 600; color: #3b2c20; margin-bottom: 0;">Luna - Workhair</h1>
+            <p style="font-size: 1.1rem; color: #8c7b6c;">ผู้ช่วย AI ของร้าน Workhair ✨</p>
+        </div>
+        <div class="barber-pole"></div>
     </div>
     """,
     unsafe_allow_html=True,
