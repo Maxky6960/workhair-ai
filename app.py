@@ -75,9 +75,6 @@ require_env("OPENROUTER_API_KEY", OPENROUTER_API_KEY)
 
 rag = load_rag()
 
-st.title("Luna ผู้ช่วย AI ของร้าน Workhair")
-st.caption("ถามเรื่องทรงผม เวลาเปิด หรือข้อมูลร้านได้เลย")
-
 
 def build_svg_avatar(text: str, bg: str) -> str:
     svg = (
@@ -106,7 +103,23 @@ def render_chat(target: "st.delta_generator.DeltaGenerator", messages: list[dict
     user_avatar = load_avatar_data_uri("user-avatar.png", "U", "#5c7fa3")
     rows: list[str] = []
 
-    for msg in messages:
+    # For column-reverse: newest messages must be at the BEGINNING of the list
+    # so they appear at the BOTTOM of the visual container.
+    display_messages = messages[::-1]
+    
+    if show_typing:
+        rows.append(
+            "<div class='message-row bot-row'>"
+            f"<img class='avatar bot-avatar' src='{bot_avatar}'>"
+            "<div class='message bot-message typing-message'>"
+            "<span class='dot'></span>"
+            "<span class='dot'></span>"
+            "<span class='dot'></span>"
+            "</div>"
+            "</div>"
+        )
+
+    for msg in display_messages:
         role = msg.get("role")
         content = msg.get("content", "")
 
@@ -129,30 +142,34 @@ def render_chat(target: "st.delta_generator.DeltaGenerator", messages: list[dict
                 "</div>"
             )
 
-    if show_typing:
-        rows.append(
-            "<div class='message-row bot-row'>"
-            f"<img class='avatar bot-avatar' src='{bot_avatar}'>"
-            "<div class='message bot-message typing-message'>"
-            "<span class='dot'></span>"
-            "<span class='dot'></span>"
-            "<span class='dot'></span>"
-            "</div>"
-            "</div>"
-        )
-
     html = "".join(rows)
-    target.markdown(f"<div class='chat-container'>{html}</div>", unsafe_allow_html=True)
+    target.markdown(f"<div class='chat-container'><div class='chat-scroll-fix'>{html}</div></div>", unsafe_allow_html=True)
 
 
 st.markdown(
     """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600&family=Inter:wght@400;500&display=swap');
+
+:root {
+    --primary-color: #f2a88b;
+    --secondary-color: #2f4254;
+    --bg-gradient: radial-gradient(circle at top left, #fef0e4 0%, #f6f4ef 45%, #edf2f7 100%);
+    --glass-bg: rgba(255, 255, 255, 0.82);
+    --glass-border: rgba(227, 218, 208, 0.5);
+    --bot-msg-bg: #fff6ef;
+    --user-msg-bg: #2f4254;
+    --shadow: 0 20px 50px rgba(32, 24, 16, 0.08);
+}
 
 body {
-    background: radial-gradient(circle at top left, #fef0e4 0%, #f6f4ef 45%, #edf2f7 100%);
+    background: var(--bg-gradient);
 }
+
+/* Hide Streamlit elements */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
 
 html, body {
     height: 100%;
@@ -171,21 +188,23 @@ main {
 main .block-container, .stMainBlockContainer {
     height: 100vh;
     overflow: hidden !important;
-    padding-bottom: 0;
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none;  /* IE and Edge */
+    padding-top: 2rem !important;
+    padding-bottom: 0 !important;
+    max-width: 950px !important;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
 }
 
 main .block-container::-webkit-scrollbar, .stMainBlockContainer::-webkit-scrollbar {
-    display: none; /* Chrome, Safari and Opera */
+    display: none;
 }
 
 .chat-container {
     font-family: 'Mitr', sans-serif;
     max-width: 880px;
-    margin: 24px auto 0;
-    padding: 24px 20px 30px;
-    height: calc(100vh - 340px);
+    margin: 10px auto 0;
+    padding: 0 20px;
+    height: calc(100vh - 350px);
     overflow-y: auto;
     background: rgba(255, 255, 255, 0.85);
     border: 1px solid rgba(227, 218, 208, 0.6);
@@ -193,77 +212,110 @@ main .block-container::-webkit-scrollbar, .stMainBlockContainer::-webkit-scrollb
     border-radius: 28px 28px 0 0;
     box-shadow: 0 24px 70px rgba(32, 24, 16, 0.12);
     backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column-reverse;
+}
+
+.chat-scroll-fix {
+    padding-top: 24px;
+    padding-bottom: 40px;
+    display: flex;
+    flex-direction: column-reverse;
+    width: 100%;
 }
 
 section[data-testid="stChatInput"] {
     max-width: 880px;
-    margin: 0 auto 24px;
-    background: rgba(255, 255, 255, 0.85);
-    border: 1px solid rgba(227, 218, 208, 0.6);
+    margin: 0 auto 30px;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
     border-top: 0;
-    border-radius: 0 0 28px 28px;
-    box-shadow: 0 24px 70px rgba(32, 24, 16, 0.12);
-    padding: 12px 18px 16px;
+    border-radius: 0 0 32px 32px;
+    box-shadow: var(--shadow);
+    padding: 15px 22px 20px;
     margin-top: -1px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* Align Streamlit notifications (like st.error) with the chat container */
+[data-testid="stNotification"], 
+[data-testid="stNotification"] > div,
+div.stAlert {
+    max-width: 880px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    width: 100% !important;
+}
+
+[data-testid="stNotification"] {
+    border-radius: 20px !important;
+}
+
+@media (max-width: 720px) {
+    [data-testid="stNotification"], 
+    [data-testid="stNotification"] > div,
+    div.stAlert {
+        max-width: calc(100% - 1.6rem) !important;
+    }
 }
 
 section[data-testid="stChatInput"] > div {
-    margin: 0;
-    background: transparent;
+    background: transparent !important;
 }
 
 .message-row {
     display: flex;
     align-items: flex-end;
     gap: 14px;
-    margin-bottom: 18px;
+    margin-bottom: 22px;
+    animation: fadeInUp 0.4s ease-out forwards;
 }
 
-.bot-row {
-    justify-content: flex-start;
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.human-row {
-    justify-content: flex-end;
-}
+.bot-row { justify-content: flex-start; }
+.human-row { justify-content: flex-end; }
 
 .avatar {
     width: 44px;
     height: 44px;
-    border-radius: 50%;
+    border-radius: 14px;
     object-fit: cover;
-    border: 2px solid #ffffff;
-    box-shadow: 0 8px 18px rgba(41, 34, 24, 0.18);
+    border: 2.5px solid #ffffff;
+    box-shadow: 0 8px 20px rgba(41, 34, 24, 0.12);
 }
 
 .message {
-    max-width: 70%;
-    padding: 14px 18px;
-    border-radius: 18px;
+    max-width: 72%;
+    padding: 15px 20px;
+    border-radius: 22px;
     font-size: 16px;
     line-height: 1.6;
-    letter-spacing: 0.2px;
 }
 
 .bot-message {
-    background: #fff6ef;
+    background: var(--bot-msg-bg);
     color: #3b2c20;
-    border-top-left-radius: 6px;
-    box-shadow: 0 12px 24px rgba(68, 46, 24, 0.12);
+    border-bottom-left-radius: 6px;
+    box-shadow: 0 8px 25px rgba(68, 46, 24, 0.06);
 }
 
 .human-message {
-    background: #2f4254;
+    background: var(--user-msg-bg);
     color: #f5f7fa;
-    border-top-right-radius: 6px;
-    box-shadow: 0 12px 24px rgba(24, 34, 46, 0.18);
+    border-bottom-right-radius: 6px;
+    box-shadow: 0 8px 25px rgba(24, 34, 46, 0.12);
 }
 
 .typing-message {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 12px 16px;
+    padding: 14px 20px;
 }
 
 .dot {
@@ -274,49 +326,61 @@ section[data-testid="stChatInput"] > div {
     animation: bounce 1.2s infinite ease-in-out;
 }
 
-.dot:nth-child(2) {
-    animation-delay: 0.2s;
-}
-
-.dot:nth-child(3) {
-    animation-delay: 0.4s;
-}
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes bounce {
     0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
-    40% { transform: translateY(-6px); opacity: 1; }
+    40% { transform: translateY(-8px); opacity: 1; }
 }
 
 @media (max-width: 720px) {
+    main .block-container, .stMainBlockContainer {
+        padding-top: 1.5rem !important;
+        padding-left: 0.8rem !important;
+        padding-right: 0.8rem !important;
+    }
+
     .chat-container {
-        margin: 16px 0 0;
-        padding: 18px 14px 24px;
-        height: calc(100vh - 300px);
+        margin: 5px auto 0;
+        padding: 15px 12px 30px;
+        height: calc(100vh - 280px);
+        border-radius: 22px 22px 0 0;
     }
 
     section[data-testid="stChatInput"] {
-        margin: 0 0 24px;
-        border-radius: 0 0 22px 22px;
-        padding: 10px 12px 14px;
+        margin: 0 auto 20px;
+        border-radius: 0 0 28px 28px;
+        padding: 10px 15px 15px;
     }
 
-    .message {
-        max-width: 78%;
-        font-size: 15px;
-    }
+    .message { max-width: 85%; font-size: 15px; }
+    .avatar { width: 38px; height: 38px; border-radius: 12px; }
+}
 
-    .avatar {
-        width: 38px;
-        height: 38px;
-    }
+@media (max-width: 480px) {
+    .chat-container { height: calc(100vh - 260px); }
+    .message { max-width: 90%; }
 }
 </style>
 """,
     unsafe_allow_html=True,
 )
 
+st.markdown(
+    """
+    <div style="text-align: center; margin-bottom: 10px; font-family: 'Mitr', sans-serif;">
+        <h1 style="font-size: 2.2rem; font-weight: 600; color: #3b2c20; margin-bottom: 0;">Luna - Workhair</h1>
+        <p style="font-size: 1.1rem; color: #8c7b6c;">ผู้ช่วย AI ของร้าน Workhair ✨</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = [
+        {"role": "assistant", "content": "สวัสดีค่ะ Luna จากร้าน Workhair ยินดีให้บริการค่ะ ✨ สามารถสอบถามเกี่ยวกับทรงผม เวลาเปิด-ปิด หรือข้อมูลต่างๆ ของร้านได้เลยนะคะ"}
+    ]
 
 chat_placeholder = st.empty()
 render_chat(chat_placeholder, st.session_state.messages)
