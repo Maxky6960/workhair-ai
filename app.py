@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+from typing import Optional
 
 import requests
 import streamlit as st
@@ -30,7 +31,7 @@ def load_rag():
     return RAGEngine("knowledge/workhair_rag.txt", cache_dir=RAG_CACHE_DIR)
 
 
-def require_env(name: str, value: str | None) -> None:
+def require_env(name: str, value: Optional[str]) -> None:
     if value:
         return
     st.error(f"Missing required env var: {name}")
