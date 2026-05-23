@@ -6,4 +6,12 @@ services:
       - "8501:8501"
     env_file:
       - .env
+    environment:
+      - RAG_CACHE_DIR=/app/.rag_cache
+      - LOG_LEVEL=INFO
+    volumes:
+      - rag_cache:/app/.rag_cache
     restart: unless-stopped
+
+volumes:
+  rag_cache:

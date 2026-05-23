@@ -1,6 +1,9 @@
-FROM python:3.13.5-slim
+FROM python:3.9-slim
 
 WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -13,7 +16,9 @@ COPY app.py ./
 COPY rag_engine.py ./
 COPY knowledge/ ./knowledge/
 
-RUN pip3 install -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+RUN mkdir -p /app/.rag_cache
 
 EXPOSE 8501
 

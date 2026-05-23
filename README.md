@@ -1,19 +1,30 @@
----
-title: Workhair
-emoji: 🚀
-colorFrom: red
-colorTo: red
-sdk: docker
-app_port: 8501
-tags:
-- streamlit
-pinned: false
-short_description: Streamlit template space
----
+# Workhair AI (Luna)
 
-# Welcome to Streamlit!
+Streamlit chatbot with RAG for Workhair salon.
 
-Edit `/src/streamlit_app.py` to customize this app to your heart's desire. :heart:
+## Requirements
+- Docker + Docker Compose
+- OpenRouter API key
 
-If you have any questions, checkout our [documentation](https://docs.streamlit.io) and [community
-forums](https://discuss.streamlit.io).
+## Setup
+1) Create `.env` from `.env.example`
+2) Set `OPENROUTER_API_KEY`
+3) Start the app
+
+```bash
+docker compose up -d --build
+```
+
+Open http://localhost:8501
+
+## Environment Variables
+- `OPENROUTER_API_KEY` (required)
+- `OPENROUTER_MODEL` (optional)
+- `OPENROUTER_TIMEOUT` (optional)
+- `OPENROUTER_MAX_RETRIES` (optional)
+- `RAG_TOP_K` (optional)
+- `RAG_CACHE_DIR` (optional)
+- `LOG_LEVEL` (optional)
+
+## Healthcheck
+Dockerfile includes a healthcheck at `/_stcore/health`.
