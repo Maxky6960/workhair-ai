@@ -1,3 +1,4 @@
+import base64
 import logging
 import os
 import time
@@ -77,17 +78,246 @@ rag = load_rag()
 st.title("Luna ผู้ช่วย AI ของร้าน Workhair")
 st.caption("ถามเรื่องทรงผม เวลาเปิด หรือข้อมูลร้านได้เลย")
 
+
+def build_svg_avatar(text: str, bg: str) -> str:
+    svg = (
+        "<svg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'>"
+        f"<rect width='72' height='72' rx='36' fill='{bg}'/>"
+        f"<text x='50%' y='52%' text-anchor='middle' dominant-baseline='middle' "
+        "font-family='Arial' font-size='28' fill='#ffffff'>"
+        f"{text}"
+        "</text>"
+        "</svg>"
+    )
+    encoded = base64.b64encode(svg.encode("utf-8")).decode("ascii")
+    return f"data:image/svg+xml;base64,{encoded}"
+
+
+def load_avatar_data_uri(path: str, fallback_text: str, fallback_bg: str) -> str:
+    if os.path.exists(path):
+        with open(path, "rb") as file:
+            encoded = base64.b64encode(file.read()).decode("ascii")
+        return f"data:image/png;base64,{encoded}"
+    return build_svg_avatar(fallback_text, fallback_bg)
+
+
+def render_chat(target: "st.delta_generator.DeltaGenerator", messages: list[dict[str, str]], show_typing: bool = False) -> None:
+    bot_avatar = load_avatar_data_uri("bot-avatar.png", "L", "#f2a88b")
+    user_avatar = load_avatar_data_uri("user-avatar.png", "U", "#5c7fa3")
+    rows: list[str] = []
+
+    for msg in messages:
+        role = msg.get("role")
+        content = msg.get("content", "")
+
+        if role == "assistant":
+            rows.append(
+                "<div class='message-row bot-row'>"
+                f"<img class='avatar bot-avatar' src='{bot_avatar}'>"
+                "<div class='message bot-message'>"
+                f"<div class='message-content'>{content}</div>"
+                "</div>"
+                "</div>"
+            )
+        elif role == "user":
+            rows.append(
+                "<div class='message-row human-row'>"
+                "<div class='message human-message'>"
+                f"<div class='message-content'>{content}</div>"
+                "</div>"
+                f"<img class='avatar human-avatar' src='{user_avatar}'>"
+                "</div>"
+            )
+
+    if show_typing:
+        rows.append(
+            "<div class='message-row bot-row'>"
+            f"<img class='avatar bot-avatar' src='{bot_avatar}'>"
+            "<div class='message bot-message typing-message'>"
+            "<span class='dot'></span>"
+            "<span class='dot'></span>"
+            "<span class='dot'></span>"
+            "</div>"
+            "</div>"
+        )
+
+    html = "".join(rows)
+    target.markdown(f"<div class='chat-container'>{html}</div>", unsafe_allow_html=True)
+
+
+st.markdown(
+    """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;600&display=swap');
+
+body {
+    background: radial-gradient(circle at top left, #fef0e4 0%, #f6f4ef 45%, #edf2f7 100%);
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden !important;
+}
+
+[data-testid="stApp"],
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+section.main,
+main {
+    height: 100vh;
+    overflow: hidden !important;
+}
+
+main .block-container {
+    height: 100vh;
+    overflow: hidden !important;
+    padding-bottom: 0;
+}
+
+.chat-container {
+    font-family: 'Mitr', sans-serif;
+    max-width: 880px;
+    margin: 24px auto 0;
+    padding: 24px 20px 30px;
+    height: calc(100vh - 340px);
+    overflow-y: auto;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(227, 218, 208, 0.6);
+    border-bottom: 0;
+    border-radius: 28px 28px 0 0;
+    box-shadow: 0 24px 70px rgba(32, 24, 16, 0.12);
+    backdrop-filter: blur(8px);
+}
+
+section[data-testid="stChatInput"] {
+    max-width: 880px;
+    margin: 0 auto 24px;
+    background: rgba(255, 255, 255, 0.85);
+    border: 1px solid rgba(227, 218, 208, 0.6);
+    border-top: 0;
+    border-radius: 0 0 28px 28px;
+    box-shadow: 0 24px 70px rgba(32, 24, 16, 0.12);
+    padding: 12px 18px 16px;
+    margin-top: -1px;
+}
+
+section[data-testid="stChatInput"] > div {
+    margin: 0;
+    background: transparent;
+}
+
+.message-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.bot-row {
+    justify-content: flex-start;
+}
+
+.human-row {
+    justify-content: flex-end;
+}
+
+.avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ffffff;
+    box-shadow: 0 8px 18px rgba(41, 34, 24, 0.18);
+}
+
+.message {
+    max-width: 70%;
+    padding: 14px 18px;
+    border-radius: 18px;
+    font-size: 16px;
+    line-height: 1.6;
+    letter-spacing: 0.2px;
+}
+
+.bot-message {
+    background: #fff6ef;
+    color: #3b2c20;
+    border-top-left-radius: 6px;
+    box-shadow: 0 12px 24px rgba(68, 46, 24, 0.12);
+}
+
+.human-message {
+    background: #2f4254;
+    color: #f5f7fa;
+    border-top-right-radius: 6px;
+    box-shadow: 0 12px 24px rgba(24, 34, 46, 0.18);
+}
+
+.typing-message {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 16px;
+}
+
+.dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #c78963;
+    animation: bounce 1.2s infinite ease-in-out;
+}
+
+.dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+    40% { transform: translateY(-6px); opacity: 1; }
+}
+
+@media (max-width: 720px) {
+    .chat-container {
+        margin: 16px 0 0;
+        padding: 18px 14px 24px;
+        height: calc(100vh - 300px);
+    }
+
+    section[data-testid="stChatInput"] {
+        margin: 0 0 24px;
+        border-radius: 0 0 22px 22px;
+        padding: 10px 12px 14px;
+    }
+
+    .message {
+        max-width: 78%;
+        font-size: 15px;
+    }
+
+    .avatar {
+        width: 38px;
+        height: 38px;
+    }
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.write(msg["content"])
+chat_placeholder = st.empty()
+render_chat(chat_placeholder, st.session_state.messages)
 
 if prompt := st.chat_input("ถามอะไรเกี่ยวกับร้านได้เลย..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.write(prompt)
+    render_chat(chat_placeholder, st.session_state.messages, show_typing=True)
 
     context_chunks = rag.search(prompt, top_k=RAG_TOP_K)
     context = "\n---\n".join(context_chunks) if context_chunks else "(ไม่มีข้อมูลที่เกี่ยวข้อง)"
@@ -111,5 +341,4 @@ if prompt := st.chat_input("ถามอะไรเกี่ยวกับร�
         answer = "ขออภัย ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง"
 
     st.session_state.messages.append({"role": "assistant", "content": answer})
-    with st.chat_message("assistant"):
-        st.write(answer)
+    render_chat(chat_placeholder, st.session_state.messages)
