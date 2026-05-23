@@ -168,10 +168,16 @@ main {
     overflow: hidden !important;
 }
 
-main .block-container {
+main .block-container, .stMainBlockContainer {
     height: 100vh;
     overflow: hidden !important;
     padding-bottom: 0;
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;  /* IE and Edge */
+}
+
+main .block-container::-webkit-scrollbar, .stMainBlockContainer::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
 }
 
 .chat-container {
