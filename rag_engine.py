@@ -1,6 +1,7 @@
 # rag_engine.py
 import json
 import os
+from typing import Optional, Tuple
 
 import faiss
 import numpy as np
@@ -80,7 +81,7 @@ class RAGEngine:
             os.path.join(self.cache_dir, f"{base}.json"),
         )
 
-    def _load_cache(self) -> tuple[faiss.Index | None, np.ndarray | None, list[str] | None]:
+    def _load_cache(self) -> Tuple[Optional[faiss.Index], Optional[np.ndarray], Optional[list[str]]]:
         index_path, meta_path = self._cache_paths()
         if not os.path.exists(index_path) or not os.path.exists(meta_path):
             return None, None, None
