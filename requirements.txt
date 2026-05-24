@@ -1,7 +1,6 @@
-altair
 faiss-cpu
-pandas
+numpy
 python-dotenv
-requests
+google-genai
 sentence-transformers
 streamlit

@@ -4,7 +4,7 @@ import os
 import time
 from typing import Optional
 
-import requests
+from google import genai
 import streamlit as st
 from dotenv import load_dotenv
 
@@ -12,11 +12,8 @@ from rag_engine import RAGEngine
 
 load_dotenv()
 
-API_URL = "https://openrouter.ai/api/v1/chat/completions"
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-MODEL = os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free")
-OPENROUTER_TIMEOUT = int(os.getenv("OPENROUTER_TIMEOUT", "45"))
-OPENROUTER_MAX_RETRIES = int(os.getenv("OPENROUTER_MAX_RETRIES", "2"))
+GEMINI_API_KEY = os.getenv("APITOKEN")
+MODEL = os.getenv("API_MODEL", "gemini-2.5-flash")
 RAG_TOP_K = int(os.getenv("RAG_TOP_K", "4"))
 RAG_CACHE_DIR = os.getenv("RAG_CACHE_DIR", ".rag_cache")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
@@ -25,6 +22,11 @@ logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s %(levelname)s %(message
 logger = logging.getLogger("workhair")
 
 st.set_page_config(page_title="Luna - Workhair", page_icon="✂️")
+
+
+@st.cache_resource
+def get_gemini_client():
+    return genai.Client(api_key=GEMINI_API_KEY)
 
 
 @st.cache_resource
@@ -39,39 +41,24 @@ def require_env(name: str, value: Optional[str]) -> None:
     st.stop()
 
 
-def call_openrouter(messages: list[dict[str, str]]) -> str:
-    payload = {
-        "model": MODEL,
-        "messages": messages,
-    }
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json",
-    }
-
-    for attempt in range(OPENROUTER_MAX_RETRIES + 1):
-        try:
-            start = time.time()
-            response = requests.post(API_URL, headers=headers, json=payload, timeout=OPENROUTER_TIMEOUT)
-            duration_ms = int((time.time() - start) * 1000)
-            logger.info("openrouter_request duration_ms=%s status=%s", duration_ms, response.status_code)
-
-            if response.status_code >= 500 and attempt < OPENROUTER_MAX_RETRIES:
-                time.sleep(0.6 * (2**attempt))
-                continue
-
-            response.raise_for_status()
-            data = response.json()
-            return data["choices"][0]["message"]["content"]
-        except (requests.RequestException, KeyError, ValueError) as exc:
-            logger.exception("openrouter_error attempt=%s", attempt)
-            if attempt < OPENROUTER_MAX_RETRIES:
-                time.sleep(0.6 * (2**attempt))
-                continue
-            raise exc
+def call_gemini(system_instruction: str, user_prompt: str) -> str:
+    client = get_gemini_client()
+    try:
+        start = time.time()
+        response = client.models.generate_content(
+            model=MODEL,
+            config={"system_instruction": system_instruction},
+            contents=user_prompt
+        )
+        duration_ms = int((time.time() - start) * 1000)
+        logger.info("gemini_request duration_ms=%s", duration_ms)
+        return response.text
+    except Exception as exc:
+        logger.exception("gemini_error")
+        raise exc
 
 
-require_env("OPENROUTER_API_KEY", OPENROUTER_API_KEY)
+require_env("APITOKEN", GEMINI_API_KEY)
 
 rag = load_rag()
 
@@ -441,13 +428,9 @@ if prompt := st.chat_input("ถามอะไรเกี่ยวกับร�
 ข้อมูลร้าน:
 {context}
 """
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": prompt},
-    ]
 
     try:
-        answer = call_openrouter(messages)
+        answer = call_gemini(system_prompt, prompt)
     except Exception:
         st.error("ขออภัย ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง")
         answer = "ขออภัย ระบบขัดข้องชั่วคราว กรุณาลองใหม่อีกครั้ง"
