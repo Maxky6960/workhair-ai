@@ -493,6 +493,82 @@ section[data-testid="stChatInput"] > div {
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
+.brand-hero {
+    max-width: 720px;
+    margin: 0 auto 16px;
+    padding: 18px 24px;
+    border-radius: 28px;
+    background:
+        linear-gradient(135deg, rgba(255, 246, 239, 0.92), rgba(237, 242, 247, 0.82)),
+        radial-gradient(circle at top left, rgba(242, 168, 139, 0.45), transparent 42%);
+    border: 1px solid rgba(242, 168, 139, 0.35);
+    box-shadow: 0 24px 70px rgba(47, 66, 84, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    font-family: 'Mitr', sans-serif;
+    position: relative;
+    overflow: hidden;
+}
+
+.brand-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+    transform: translateX(-100%);
+    animation: hero-shine 6s ease-in-out infinite;
+}
+
+@keyframes hero-shine {
+    0%, 65% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+.brand-hero-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+}
+
+.brand-copy {
+    text-align: center;
+}
+
+.brand-eyebrow {
+    color: #c78963;
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.brand-title {
+    font-size: clamp(2rem, 4vw, 3.1rem);
+    line-height: 1;
+    font-weight: 600;
+    color: #2f4254;
+    margin: 0;
+    letter-spacing: -0.04em;
+}
+
+.brand-subtitle {
+    font-size: 1.05rem;
+    color: #6f5d4e;
+    margin: 10px 0 0;
+}
+
+.brand-hero .barber-pole {
+    height: 58px;
+    width: 16px;
+    flex: 0 0 auto;
+    box-shadow: 0 10px 22px rgba(47, 66, 84, 0.18);
+}
+
 @keyframes barber-roll {
     from { background-position: 0 0; }
     to { background-position: 0 64px; }
@@ -500,6 +576,9 @@ section[data-testid="stChatInput"] > div {
 
 @media (max-width: 720px) {
     .barber-pole { height: 40px; width: 12px; }
+    .brand-hero { padding: 16px 14px; border-radius: 24px; }
+    .brand-hero-content { gap: 14px; }
+    .brand-subtitle { font-size: 0.95rem; }
 }
 </style>
 """,
@@ -544,13 +623,16 @@ main .block-container::-webkit-scrollbar, .stMainBlockContainer::-webkit-scrollb
 
 st.markdown(
     """
-    <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 10px; font-family: 'Mitr', sans-serif;">
-        <div class="barber-pole"></div>
-        <div style="text-align: center;">
-            <h1 style="font-size: 2.2rem; font-weight: 600; color: #3b2c20; margin-bottom: 0;">Luna - Workhair</h1>
-            <p style="font-size: 1.1rem; color: #8c7b6c;">ผู้ช่วย AI ของร้าน Workhair ✨</p>
+    <div class="brand-hero">
+        <div class="brand-hero-content">
+            <div class="barber-pole"></div>
+            <div class="brand-copy">
+                <div class="brand-eyebrow">AI Salon Assistant</div>
+                <h1 class="brand-title">Luna - Workhair</h1>
+                <p class="brand-subtitle">ผู้ช่วย AI ของร้าน Workhair ✨</p>
+            </div>
+            <div class="barber-pole"></div>
         </div>
-        <div class="barber-pole"></div>
     </div>
     """,
     unsafe_allow_html=True,
