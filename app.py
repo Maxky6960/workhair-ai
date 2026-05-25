@@ -17,6 +17,8 @@ MODEL = os.getenv("API_MODEL", "gemini-2.5-flash")
 RAG_TOP_K = int(os.getenv("RAG_TOP_K", "4"))
 RAG_CACHE_DIR = os.getenv("RAG_CACHE_DIR", ".rag_cache")
 LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "workhair123")
 
 logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("workhair")
@@ -89,6 +91,49 @@ def call_gemini(system_instruction: str, user_prompt: str) -> str:
         raise exc
 
 
+def is_admin_authenticated() -> bool:
+    return bool(st.session_state.get("admin_authenticated"))
+
+
+def open_admin_page() -> None:
+    st.query_params["page"] = "admin"
+    st.rerun()
+
+
+@st.dialog("เข้าสู่ระบบแอดมิน", width="small")
+def render_admin_login_dialog() -> None:
+    st.caption("กรอก username และ password เพื่อเข้าหน้าบันทึกยอดขาย")
+
+    with st.form("admin_login_form"):
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
+        submitted = st.form_submit_button("เข้าสู่ระบบ", use_container_width=True)
+
+    if not submitted:
+        return
+
+    if username.strip() == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+        st.session_state.admin_authenticated = True
+        open_admin_page()
+
+    st.error("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง")
+
+
+def render_admin_gate() -> None:
+    st.markdown("### เข้าสู่ระบบแอดมิน")
+    st.info("กรุณาล็อกอินก่อนเข้าหน้าบันทึกยอดขาย")
+    if st.button("เปิดหน้าล็อกอิน", type="primary", use_container_width=True):
+        render_admin_login_dialog()
+
+
+def render_admin_button() -> None:
+    if is_admin_authenticated():
+        if st.button("Admin", type="primary", key="admin_chat_button", use_container_width=True):
+            open_admin_page()
+    elif st.button("Admin", key="admin_chat_button", use_container_width=True):
+        render_admin_login_dialog()
+
+
 def render_admin_page() -> None:
     st.markdown(
         """
@@ -103,7 +148,13 @@ def render_admin_page() -> None:
         unsafe_allow_html=True,
     )
 
-    st.markdown("[กลับหน้าแชทลูกค้า](./)")
+    nav_col, logout_col = st.columns([3, 1])
+    nav_col.markdown("[กลับหน้าแชทลูกค้า](./)")
+    if logout_col.button("ออกจากระบบ", use_container_width=True):
+        st.session_state.admin_authenticated = False
+        st.query_params.clear()
+        st.rerun()
+
     st.info("ก่อนใช้งานต้องตั้งค่า GOOGLE_SHEETS_ID และ GOOGLE_SERVICE_ACCOUNT_FILE หรือ GOOGLE_SERVICE_ACCOUNT_JSON")
 
     with st.form("sales_form"):
@@ -297,9 +348,9 @@ main {
 main .block-container, .stMainBlockContainer {
     height: 100vh;
     overflow: hidden !important;
-    padding-top: 2rem !important;
+    padding-top: 1rem !important;
     padding-bottom: 0 !important;
-    max-width: 950px !important;
+    max-width: 820px !important;
     scrollbar-width: none;
     -ms-overflow-style: none;
 }
@@ -310,48 +361,64 @@ main .block-container::-webkit-scrollbar, .stMainBlockContainer::-webkit-scrollb
 
 .chat-container {
     font-family: 'Mitr', sans-serif;
-    max-width: 880px;
-    margin: 10px auto 0;
-    padding: 0 20px;
-    height: calc(100vh - 350px);
+    max-width: 760px;
+    margin: 8px auto 0;
+    padding: 0 16px;
+    height: calc(100vh - 390px);
     overflow-y: auto;
     background: rgba(255, 255, 255, 0.85);
     border: 1px solid rgba(227, 218, 208, 0.6);
     border-bottom: 0;
-    border-radius: 28px 28px 0 0;
-    box-shadow: 0 24px 70px rgba(32, 24, 16, 0.12);
+    border-radius: 22px 22px 0 0;
+    box-shadow: 0 18px 48px rgba(32, 24, 16, 0.1);
     backdrop-filter: blur(8px);
     display: flex;
     flex-direction: column-reverse;
 }
 
 .chat-scroll-fix {
-    padding-top: 24px;
-    padding-bottom: 40px;
+    padding-top: 18px;
+    padding-bottom: 64px;
     display: flex;
     flex-direction: column-reverse;
     width: 100%;
 }
 
 section[data-testid="stChatInput"] {
-    max-width: 880px;
-    margin: 0 auto 30px;
+    max-width: 760px;
+    margin: 0 auto 18px;
     background: var(--glass-bg);
     border: 1px solid var(--glass-border);
     border-top: 0;
-    border-radius: 0 0 32px 32px;
+    border-radius: 0 0 24px 24px;
     box-shadow: var(--shadow);
-    padding: 15px 22px 20px;
+    padding: 11px 18px 14px;
     margin-top: -1px;
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
+}
+
+.st-key-admin_chat_button {
+    max-width: 78px;
+    margin: 4px auto 0;
+    position: relative;
+    z-index: 2;
+}
+
+.st-key-admin_chat_button button {
+    min-height: 24px;
+    border-radius: 999px;
+    font-family: 'Mitr', sans-serif;
+    font-size: 0.58rem;
+    box-shadow: 0 8px 18px rgba(47, 66, 84, 0.14);
+    padding: 0 8px;
 }
 
 /* Align Streamlit notifications (like st.error) with the chat container */
 [data-testid="stNotification"], 
 [data-testid="stNotification"] > div,
 div.stAlert {
-    max-width: 880px !important;
+    max-width: 760px !important;
     margin-left: auto !important;
     margin-right: auto !important;
     width: 100% !important;
@@ -376,8 +443,8 @@ section[data-testid="stChatInput"] > div {
 .message-row {
     display: flex;
     align-items: flex-end;
-    gap: 14px;
-    margin-bottom: 22px;
+    gap: 10px;
+    margin-bottom: 16px;
     animation: fadeInUp 0.4s ease-out forwards;
 }
 
@@ -390,9 +457,9 @@ section[data-testid="stChatInput"] > div {
 .human-row { justify-content: flex-end; }
 
 .avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
     object-fit: cover;
     border: 2.5px solid #ffffff;
     box-shadow: 0 8px 20px rgba(41, 34, 24, 0.12);
@@ -400,10 +467,10 @@ section[data-testid="stChatInput"] > div {
 
 .message {
     max-width: 72%;
-    padding: 15px 20px;
-    border-radius: 22px;
-    font-size: 16px;
-    line-height: 1.6;
+    padding: 12px 17px;
+    border-radius: 18px;
+    font-size: 14.5px;
+    line-height: 1.55;
 }
 
 .bot-message {
@@ -424,7 +491,7 @@ section[data-testid="stChatInput"] > div {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 14px 20px;
+    padding: 12px 17px;
 }
 
 .dot {
@@ -445,30 +512,45 @@ section[data-testid="stChatInput"] > div {
 
 @media (max-width: 720px) {
     main .block-container, .stMainBlockContainer {
-        padding-top: 1.5rem !important;
+        padding-top: 0.8rem !important;
         padding-left: 0.8rem !important;
         padding-right: 0.8rem !important;
     }
 
     .chat-container {
         margin: 5px auto 0;
-        padding: 15px 12px 30px;
-        height: calc(100vh - 280px);
-        border-radius: 22px 22px 0 0;
+        padding: 10px 10px 24px;
+        height: calc(100vh - 315px);
+        border-radius: 18px 18px 0 0;
+    }
+
+    .chat-scroll-fix {
+        padding-bottom: 58px;
     }
 
     section[data-testid="stChatInput"] {
-        margin: 0 auto 20px;
-        border-radius: 0 0 28px 28px;
-        padding: 10px 15px 15px;
+        margin: 0 auto 14px;
+        border-radius: 0 0 20px 20px;
+        padding: 9px 12px 12px;
     }
 
-    .message { max-width: 85%; font-size: 15px; }
-    .avatar { width: 38px; height: 38px; border-radius: 12px; }
+    .st-key-admin_chat_button {
+        max-width: 74px;
+        margin: 5px auto 0;
+    }
+
+    .st-key-admin_chat_button button {
+        min-height: 24px;
+        font-size: 0.58rem;
+        padding: 0 8px;
+    }
+
+    .message { max-width: 85%; font-size: 13.8px; }
+    .avatar { width: 32px; height: 32px; border-radius: 10px; }
 }
 
 @media (max-width: 480px) {
-    .chat-container { height: calc(100vh - 260px); }
+    .chat-container { height: calc(100vh - 300px); }
     .message { max-width: 90%; }
 }
 
@@ -493,16 +575,16 @@ section[data-testid="stChatInput"] > div {
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-.brand-hero {
-    max-width: 720px;
-    margin: 0 auto 16px;
-    padding: 18px 24px;
-    border-radius: 28px;
+.st-key-brand_hero_panel {
+    max-width: 430px;
+    margin: 0 auto 10px;
+    padding: 8px 14px 10px;
+    border-radius: 16px;
     background:
         linear-gradient(135deg, rgba(255, 246, 239, 0.92), rgba(237, 242, 247, 0.82)),
         radial-gradient(circle at top left, rgba(242, 168, 139, 0.45), transparent 42%);
     border: 1px solid rgba(242, 168, 139, 0.35);
-    box-shadow: 0 24px 70px rgba(47, 66, 84, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    box-shadow: 0 10px 28px rgba(47, 66, 84, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.75);
     backdrop-filter: blur(14px);
     -webkit-backdrop-filter: blur(14px);
     font-family: 'Mitr', sans-serif;
@@ -510,7 +592,7 @@ section[data-testid="stChatInput"] > div {
     overflow: hidden;
 }
 
-.brand-hero::before {
+.st-key-brand_hero_panel::before {
     content: "";
     position: absolute;
     inset: 0;
@@ -530,7 +612,7 @@ section[data-testid="stChatInput"] > div {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 24px;
+    gap: 10px;
 }
 
 .brand-copy {
@@ -539,7 +621,7 @@ section[data-testid="stChatInput"] > div {
 
 .brand-eyebrow {
     color: #c78963;
-    font-size: 0.78rem;
+    font-size: 0.5rem;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     font-family: 'Inter', sans-serif;
@@ -548,7 +630,7 @@ section[data-testid="stChatInput"] > div {
 }
 
 .brand-title {
-    font-size: clamp(2rem, 4vw, 3.1rem);
+    font-size: clamp(1rem, 2.1vw, 1.38rem);
     line-height: 1;
     font-weight: 600;
     color: #2f4254;
@@ -557,16 +639,16 @@ section[data-testid="stChatInput"] > div {
 }
 
 .brand-subtitle {
-    font-size: 1.05rem;
+    font-size: 0.66rem;
     color: #6f5d4e;
-    margin: 10px 0 0;
+    margin: 4px 0 0;
 }
 
-.brand-hero .barber-pole {
-    height: 58px;
-    width: 16px;
+.brand-hero-content .barber-pole {
+    height: 26px;
+    width: 8px;
     flex: 0 0 auto;
-    box-shadow: 0 10px 22px rgba(47, 66, 84, 0.18);
+    box-shadow: 0 8px 18px rgba(47, 66, 84, 0.16);
 }
 
 @keyframes barber-roll {
@@ -576,9 +658,9 @@ section[data-testid="stChatInput"] > div {
 
 @media (max-width: 720px) {
     .barber-pole { height: 40px; width: 12px; }
-    .brand-hero { padding: 16px 14px; border-radius: 24px; }
-    .brand-hero-content { gap: 14px; }
-    .brand-subtitle { font-size: 0.95rem; }
+    .st-key-brand_hero_panel { padding: 8px 10px 10px; border-radius: 15px; }
+    .brand-hero-content { gap: 8px; }
+    .brand-subtitle { font-size: 0.64rem; }
 }
 </style>
 """,
@@ -621,9 +703,9 @@ main .block-container::-webkit-scrollbar, .stMainBlockContainer::-webkit-scrollb
         unsafe_allow_html=True,
     )
 
-st.markdown(
-    """
-    <div class="brand-hero">
+with st.container(key="brand_hero_panel"):
+    st.markdown(
+        """
         <div class="brand-hero-content">
             <div class="barber-pole"></div>
             <div class="brand-copy">
@@ -633,12 +715,16 @@ st.markdown(
             </div>
             <div class="barber-pole"></div>
         </div>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+        """,
+        unsafe_allow_html=True,
+    )
+    if PAGE != "admin":
+        render_admin_button()
 
 if PAGE == "admin":
+    if not is_admin_authenticated():
+        render_admin_gate()
+        st.stop()
     render_admin_page()
     st.stop()
 
@@ -653,7 +739,9 @@ if "messages" not in st.session_state:
 chat_placeholder = st.empty()
 render_chat(chat_placeholder, st.session_state.messages)
 
-if prompt := st.chat_input("ถามอะไรเกี่ยวกับร้านได้เลย..."):
+prompt = st.chat_input("ถามอะไรเกี่ยวกับร้านได้เลย...")
+
+if prompt:
     st.session_state.messages.append({"role": "user", "content": prompt})
     render_chat(chat_placeholder, st.session_state.messages, show_typing=True)
 
