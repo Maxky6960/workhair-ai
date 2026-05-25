@@ -1,4 +1,6 @@
 faiss-cpu
+gspread
+google-auth
 numpy
 python-dotenv
 google-genai

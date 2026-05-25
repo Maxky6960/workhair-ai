@@ -22,6 +22,7 @@ logging.basicConfig(level=LOG_LEVEL, format="%(asctime)s %(levelname)s %(message
 logger = logging.getLogger("workhair")
 
 st.set_page_config(page_title="Luna - Workhair", page_icon="✂️")
+PAGE = st.query_params.get("page", "chat").lower()
 
 
 @st.cache_resource
@@ -88,9 +89,92 @@ def call_gemini(system_instruction: str, user_prompt: str) -> str:
         raise exc
 
 
-require_env("APITOKEN", GEMINI_API_KEY)
+def render_admin_page() -> None:
+    st.markdown(
+        """
+        <div style="font-family: 'Mitr', sans-serif; max-width: 900px; margin: 0 auto 18px;">
+            <div style="background: linear-gradient(135deg, #2f4254, #3b2c20); color: white; padding: 26px 30px; border-radius: 26px; box-shadow: 0 18px 45px rgba(32, 24, 16, 0.14);">
+                <div style="font-size: 0.95rem; opacity: 0.82; margin-bottom: 6px;">Workhair Back Office</div>
+                <h1 style="font-size: 2rem; margin: 0 0 6px; font-weight: 600;">บันทึกยอดขาย</h1>
+                <div style="font-size: 1rem; opacity: 0.9;">สำหรับแอดมินร้าน Workhair ใช้บันทึกยอดบริการลง Google Sheets</div>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
-rag = load_rag()
+    st.markdown("[กลับหน้าแชทลูกค้า](./)")
+    st.info("ก่อนใช้งานต้องตั้งค่า GOOGLE_SHEETS_ID และ GOOGLE_SERVICE_ACCOUNT_FILE หรือ GOOGLE_SERVICE_ACCOUNT_JSON")
+
+    with st.form("sales_form"):
+        st.markdown("### รายละเอียดบริการ")
+        left_col, right_col = st.columns(2)
+
+        with left_col:
+            service = st.selectbox(
+                "บริการ",
+                [
+                    "ตัดผมชาย",
+                    "ตัดผมหญิง",
+                    "สระ + ไดร์",
+                    "ยืดผมธรรมชาติ",
+                    "ทำสีผมแฟชั่น",
+                    "ดัดวอลลุ่ม",
+                    "โกนหนวด + เซ็ตทรง",
+                    "สระ + นวดหนังศีรษะ",
+                    "ทรีตเมนต์บำรุงล้ำลึก",
+                    "ดีท็อกซ์หนังศีรษะ",
+                    "ไฮไลต์/บาลายาจ",
+                    "ทำสีโคน",
+                    "ดัดดิจิทัล",
+                    "ต่อผม/เพิ่มความยาว",
+                    "ออกแบบทรงเฉพาะบุคคล",
+                    "อื่น ๆ",
+                ],
+            )
+            custom_service = st.text_input("บริการอื่น ๆ", placeholder="กรอกเมื่อเลือก อื่น ๆ")
+            staff = st.selectbox("ช่างผู้ให้บริการ", ["", "ช่างมิน", "ช่างบาส", "ช่างแพรว", "ช่างโบนัส"])
+
+        with right_col:
+            quantity = st.number_input("จำนวน", min_value=1, value=1, step=1)
+            price = st.number_input("ราคาต่อรายการ", min_value=0.0, value=150.0, step=10.0)
+            payment_method = st.selectbox("วิธีชำระเงิน", ["", "เงินสด", "โอนผ่านธนาคาร", "PromptPay"])
+
+        note = st.text_input("หมายเหตุ", placeholder="เช่น walk-in, จองคิวล่วงหน้า, ลูกค้าประจำ")
+        total = int(quantity) * float(price)
+        st.markdown("### สรุปก่อนบันทึก")
+        metric_cols = st.columns(3)
+        metric_cols[0].metric("จำนวน", f"{int(quantity)}")
+        metric_cols[1].metric("ราคาต่อรายการ", f"{float(price):,.0f} บาท")
+        metric_cols[2].metric("ยอดรวม", f"{total:,.0f} บาท")
+
+        submitted = st.form_submit_button("บันทึกยอดขาย", use_container_width=True)
+
+    if not submitted:
+        return
+
+    final_service = custom_service.strip() if service == "อื่น ๆ" else service
+    if not final_service:
+        st.error("กรุณากรอกชื่อบริการ")
+        return
+
+    try:
+        from sales_logger import log_sale
+
+        sale = log_sale(
+            service=final_service,
+            quantity=int(quantity),
+            price=float(price),
+            staff=staff,
+            payment_method=payment_method,
+            note=note,
+        )
+        st.success(f"บันทึกสำเร็จ: {sale['service']} x{sale['quantity']} = {sale['total']:,.0f} บาท")
+        with st.expander("ข้อมูลที่บันทึก"):
+            st.write(sale)
+    except Exception as exc:
+        logger.exception("sales_logger_error")
+        st.error(f"บันทึกไม่สำเร็จ: {exc}")
 
 
 def build_svg_avatar(text: str, bg: str) -> str:
@@ -422,6 +506,42 @@ section[data-testid="stChatInput"] > div {
     unsafe_allow_html=True,
 )
 
+if PAGE == "admin":
+    st.markdown(
+        """
+<style>
+html, body {
+    height: auto !important;
+    overflow: auto !important;
+}
+
+[data-testid="stApp"],
+[data-testid="stAppViewContainer"],
+[data-testid="stMain"],
+section.main,
+main {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow: auto !important;
+}
+
+main .block-container, .stMainBlockContainer {
+    height: auto !important;
+    min-height: 100vh !important;
+    overflow: visible !important;
+    padding-bottom: 4rem !important;
+    scrollbar-width: auto !important;
+    -ms-overflow-style: auto !important;
+}
+
+main .block-container::-webkit-scrollbar, .stMainBlockContainer::-webkit-scrollbar {
+    display: initial !important;
+}
+</style>
+""",
+        unsafe_allow_html=True,
+    )
+
 st.markdown(
     """
     <div style="display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 10px; font-family: 'Mitr', sans-serif;">
@@ -435,6 +555,13 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+if PAGE == "admin":
+    render_admin_page()
+    st.stop()
+
+require_env("APITOKEN", GEMINI_API_KEY)
+rag = load_rag()
 
 if "messages" not in st.session_state:
     st.session_state.messages = [

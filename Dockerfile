@@ -14,6 +14,8 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt ./
 COPY app.py ./
 COPY rag_engine.py ./
+COPY sales_logger.py ./
+COPY sheets_client.py ./
 COPY knowledge/ ./knowledge/
 
 RUN pip3 install --no-cache-dir -r requirements.txt
